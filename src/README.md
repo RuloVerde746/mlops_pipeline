@@ -47,11 +47,16 @@ El sistema genera y utiliza los siguientes recursos ubicados en la carpeta `asse
 - [**Datos de Drift (JSON)**](../assets/drift_report.json): Formato estructurado para integración con otros sistemas de monitoreo o logs.
 
 ### Análisis Visual de Variables
-Para las variables que presentan alertas, el sistema genera gráficos de diagnóstico profundo. Puedes ver ejemplos de los análisis realizados aquí:
+Para las variables que presentan alertas, el sistema genera gráficos de diagnóstico profundo. A continuación se presentan los análisis detallados:
 
-| Variable 1 Analysis | Variable 4 Analysis | Variable 24 Analysis |
-|:---:|:---:|:---:|
-| ![Drift Plot 1](../assets/images/drift_plot_1.png) | ![Drift Plot 4](../assets/images/drift_plot_4.png) | ![Drift Plot 24](../assets/images/drift_plot_24.png) |
+#### Análisis Variable 1
+![Drift Plot 1](../assets/images/drift_plot_1.png)
+
+#### Análisis Variable 4
+![Drift Plot 4](../assets/images/drift_plot_4.png)
+
+#### Análisis Variable 24
+![Drift Plot 24](../assets/images/drift_plot_24.png)
 
 *Estos gráficos comparan histogramas, box-plots y Q-Q plots para diagnosticar la naturaleza del drift.*
 
