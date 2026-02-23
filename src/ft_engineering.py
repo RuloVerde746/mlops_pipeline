@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ft_engineering_improved.py - Feature Engineering Mejorado
+ft_engineering.py - Feature Engineering Mejorado
 
 Basado en las mejores prácticas de sklearn Pipeline y ColumnTransformer
 Combina la modularidad del código original con la robustez del código de referencia

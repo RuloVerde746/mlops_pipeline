@@ -1,4 +1,6 @@
-# 🚀 MLOps Pipeline - Credit Scoring Project
+# 🤖 MLOps Pipeline - Predicción de Créditos
+
+**Versión actual: 1.2.0**
 
 Este repositorio contiene la implementación paso a paso de un pipeline de MLOps automatizado para la predicción de riesgo crediticio (Credit Scoring).
 
@@ -102,3 +104,47 @@ python src/model_training_evaluation.py
 ```
 
 El código seleccionará automáticamente el mejor modelo (Decision Tree) y guardará todos los artefactos necesarios para producción.
+
+---
+
+## 📊 Avances (Versión actual 1.2.0)
+
+### 🔍 AVANCE 3: Model Monitoring y Data Drift Detection
+- [x] **Sistema de monitoreo completo** (`src/model_monitoring.py`)
+- [x] **Detección de data drift** con múltiples métricas estadísticas:
+  - **PSI** (Population Stability Index) - Detecta cambios en distribución poblacional
+  - **KS** (Kolmogorov-Smirnov) - Compara distribuciones acumuladas  
+  - **Jensen-Shannon** - Mide divergencia entre distribuciones
+  - **Chi-cuadrado** - Para variables categóricas
+- [x] **Sistema de alertas automático** con 3 niveles:
+  - 🔴 **CRITICAL**: 2+ métricas críticas o 1 crítica + 2 advertencias
+  - 🟡 **WARNING**: 1 crítica o 2+ advertencias
+  - 🟢 **NORMAL**: Métricas dentro de umbrales normales
+- [x] **Reportes HTML interactivos** con visualizaciones y tablas de métricas
+- [x] **Gráficos comparativos** para variables con alertas (histogramas, box plots, Q-Q plots)
+- [x] **Datos para dashboard Streamlit** (`assets/streamlit_dashboard_data.pkl`)
+- [x] **Estructura de archivos organizada**:
+  - `assets/` - Reportes y datos generados
+  - `assets/images/` - Gráficos de monitoreo
+  - `assets/drift_report.html` - Reporte principal
+  - `assets/drift_report.json` - Datos en formato JSON
+
+### 🏆 Resultados del Monitoreo
+| Métrica | Resultado |
+|----------|-----------|
+| **Variables analizadas** | 37 |
+| **Alertas críticas** | 4 (variables: 1, 4, 24, prediction) |
+| **Alertas de advertencia** | 17 variables |
+| **Variables normales** | 16 variables |
+
+### 🚀 Cómo Usar el Monitoreo
+```bash
+# Ejecutar monitoreo completo
+python src/model_monitoring.py
+```
+
+### 📁 Archivos Generados por el Monitoreo
+- **`assets/drift_report.html`** - Reporte HTML completo
+- **`assets/drift_report.json`** - Datos en formato JSON
+- **`assets/images/drift_plot_*.png`** - Gráficos de variables con alertas
+- **`assets/streamlit_dashboard_data.pkl`** - Datos para dashboard Streamlit
