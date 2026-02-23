@@ -26,6 +26,11 @@ Este repositorio contiene la implementación paso a paso de un pipeline de MLOps
     pip install -r requirements.txt
     ```
 
+## 📊 Avances (Versión actual 1.0.1)
+- [x] Configuración del entorno de desarrollo (venv, requirements).
+- [x] Construcción de la función base de carga de datos sin conexión forzada.
+- [x] EDA visual completado (Tratamiento de nulos cruzando variables, filtrado de categorías con poco volumen, análisis cruzado de morosidad).
+
 ## 📊 Avances (Versión actual 1.1.0)
 - [x] Configuración del entorno de desarrollo (venv, requirements).
 - [x] Construcción de la función base de carga de datos sin conexión forzada.
@@ -78,7 +83,7 @@ Entrena, evalúa y selecciona automáticamente el mejor modelo de clasificación
 ### 🏅 Resultados Obtenidos
 | Modelo | Accuracy | Precision | Recall | F1-Score |
 |--------|----------|-----------|---------|----------|
-| **Decision Tree** 🥇 | **1.0000** | **1.0000** | **1.0000** | **1.0000** |
+| **Decision Tree**  | **1.0000** | **1.0000** | **1.0000** | **1.0000** |
 | Random Forest | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
 | XGBoost | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
 | Logistic Regression | 0.9991 | 1.0000 | 0.9990 | 0.9995 |
