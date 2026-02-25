@@ -1,6 +1,6 @@
 # 🤖 MLOps Pipeline - Predicción de Créditos
 
-**Versión actual: 1.2.0**
+**Versión actual: 1.3.0**
 
 Este repositorio contiene la implementación paso a paso de un pipeline de MLOps automatizado para la predicción de riesgo crediticio (Credit Scoring).
 
@@ -148,3 +148,32 @@ python src/model_monitoring.py
 - **`assets/drift_report.json`** - Datos en formato JSON
 - **`assets/images/drift_plot_*.png`** - Gráficos de variables con alertas
 - **`assets/streamlit_dashboard_data.pkl`** - Datos para dashboard Streamlit
+
+---
+
+## 🚀 Avance 4: Model Deployment (API)
+
+### 🎯 Objetivos Logrados
+- [x] **Disponibilización del modelo mediante una API**: Implementación de un servicio REST para predicciones en tiempo real y por lotes.
+- [x] **Creación de imagen Docker**: Preparación del entorno contenedorizado con todas las librerías y el código necesario para la aplicación.
+
+### 🛠 Despliegue del Modelo (`src/model_deploy.py`)
+
+Este script representa el núcleo del despliegue productivo, utilizando **FastAPI** para exponer el modelo como un servicio robusto y escalable.
+
+#### 🔧 Funcionalidades y Responsabilidades
+- **Carga de Modelos**: Carga automática del mejor modelo (`mejor_modelo_decision_tree.pkl`) y su preprocesador (`preprocesador.pkl`).
+- **Lógica de Predicción**: Implementa la transformación de datos de entrada asegurando consistencia con el entrenamiento.
+- **Endpoints REST**:
+    - `POST /predict`: Permite enviar múltiples registros para predicción por lotes (batch).
+    - `POST /predict_single`: Optimizado para predicciones individuales rápidas.
+    - `GET /model_info`: Proporciona metadatos sobre la versión y tipo de modelo cargado.
+    - `GET /health`: Verifica el estado de salud del servicio y la carga de artefactos.
+- **Soporte Pydantic**: Validación estricta de datos de entrada mediante esquemas definidos.
+
+#### 🚀 Cómo Ejecutar la API
+```bash
+# Iniciar el servidor Uvicorn
+python src/model_deploy.py
+```
+La documentación interactiva estará disponible automáticamente en `http://localhost:8000/docs`.
