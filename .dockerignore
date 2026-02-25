@@ -1,0 +1,32 @@
+# Ignorar archivos que no son necesarios en el contenedor
+.git
+.gitignore
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# Ignorar archivos de datos grandes (solo si no son necesarios)
+*.xlsx
+*.csv
+!data_referencia.csv
+
+# Ignorar archivos temporales
+temp/
+tmp/
+.DS_Store
