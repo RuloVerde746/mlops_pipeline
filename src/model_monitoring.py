@@ -31,15 +31,19 @@ warnings.filterwarnings('ignore')
 plt.style.use('default')
 sns.set_style("whitegrid")
 
+# Configuración de rutas robustas
+script_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.abspath(os.path.join(script_dir, '..'))
+
 class ModelMonitor:
     """
     Clase principal para monitoreo de modelos y detección de data drift
     """
     
-    def __init__(self, reference_data_path='../data/raw/data_referencia.csv', 
-                 model_path='../models/mejor_modelo_decision_tree.pkl',
-                 preprocessor_path='../models/preprocesador.pkl',
-                 metadata_path='../models/model_metadata.pkl'):
+    def __init__(self, reference_data_path=None, 
+                 model_path=None,
+                 preprocessor_path=None,
+                 metadata_path=None):
         """
         Inicializa el monitor con datos de referencia y artefactos del modelo
         
@@ -49,7 +53,18 @@ class ModelMonitor:
             preprocessor_path: Path al preprocesador
             metadata_path: Path a metadatos del modelo
         """
+        # Establecer rutas por defecto relativas al root_dir
+        if reference_data_path is None:
+            reference_data_path = os.path.join(root_dir, 'data', 'processed', 'data_referencia.csv')
+        if model_path is None:
+            model_path = os.path.join(root_dir, 'models', 'mejor_modelo_decision_tree.pkl')
+        if preprocessor_path is None:
+            preprocessor_path = os.path.join(root_dir, 'models', 'preprocesador.pkl')
+        if metadata_path is None:
+            metadata_path = os.path.join(root_dir, 'models', 'model_metadata.pkl')
+
         print("🔧 Inicializando sistema de monitoreo...")
+        print(f"DEBUG: reference_data_path: {reference_data_path}")
         
         # Cargar artefactos del modelo
         self.reference_data = pd.read_csv(reference_data_path)
@@ -97,7 +112,8 @@ class ModelMonitor:
             from ft_engineering import load_and_prepare_data
             
             # Cargar datos originales para aplicar feature engineering
-            original_data = pd.read_csv('../data/processed/data_cleaned.csv')
+            data_cleaned_path = os.path.join(root_dir, 'data', 'processed', 'data_cleaned.csv')
+            original_data = pd.read_csv(data_cleaned_path)
             
             # Simular nuevos datos (en producción vendrían de API/base de datos)
             # Para demo, mezclamos datos originales con nuevos
@@ -298,9 +314,13 @@ class ModelMonitor:
                     # Determinar nivel de alerta
                     alert_level = self._get_alert_level(psi, ks_stat, js_dist)
                     
+                    # LOG DE CONSOLA OBLIGATORIO
+                    print(f"    [LOG] Var: {var} | PSI: {psi:.4f} | Alert: {alert_level}")
+                    
                     results[var] = {
+                        'variable': str(var),
                         'psi': psi,
-                        'ks_statistic': ks_stat,
+                        'ks_stat': ks_stat,
                         'ks_p_value': ks_p,
                         'jensen_shannon': js_dist,
                         'alert_level': alert_level,
@@ -318,10 +338,12 @@ class ModelMonitor:
             )
             
             results['prediction'] = {
+                'variable': 'prediction',
                 'chi2_statistic': chi2_stat,
                 'chi2_p_value': chi2_p,
                 'alert_level': self._get_alert_level_categorical(chi2_p)
             }
+            print(f"    [LOG] Var: prediction | Chi2: {chi2_stat:.4f} | Alert: {results['prediction']['alert_level']}")
         
         self.monitoring_results = results
         print(f"✅ Evaluación completada: {len(results)} variables analizadas")
@@ -378,14 +400,17 @@ class ModelMonitor:
         else:
             return 'NORMAL'
     
-    def create_drift_report(self, save_path='assets/drift_report.html'):
+    def create_drift_report(self, save_path=None):
         """
         Crea reporte HTML de monitoreo con visualizaciones
         
         Args:
             save_path: Path donde guardar el reporte
         """
-        print("📋 Generando reporte de monitoreo...")
+        if save_path is None:
+            save_path = os.path.join(root_dir, 'assets', 'drift_report.html')
+            
+        print(f"📋 Generando reporte de monitoreo en: {save_path}")
         
         if not self.monitoring_results:
             print("❌ No hay resultados de monitoreo disponibles")
@@ -395,7 +420,6 @@ class ModelMonitor:
         html_content = self._generate_html_report()
         
         # Asegurar que el directorio assets exista
-        import os
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         
         # Guardar reporte
@@ -462,7 +486,7 @@ class ModelMonitor:
                 <tr class="{alert_class}">
                     <td>{var}</td>
                     <td>{metrics['psi']:.4f}</td>
-                    <td>{metrics['ks_statistic']:.4f}</td>
+                    <td>{metrics['ks_stat']:.4f}</td>
                     <td>{metrics['jensen_shannon']:.4f}</td>
                     <td><strong>{metrics['alert_level']}</strong></td>
                     <td>{mean_change:+.4f}</td>
@@ -548,7 +572,7 @@ class ModelMonitor:
         
         metrics_text = f"""
         PSI: {metrics['psi']:.4f}
-        KS: {metrics['ks_statistic']:.4f}
+        KS: {metrics['ks_stat']:.4f}
         Jensen-Shannon: {metrics['jensen_shannon']:.4f}
         Alert Level: {metrics['alert_level']}
         """
@@ -565,10 +589,14 @@ class ModelMonitor:
         # Guardar en assets/images por defecto o en el path especificado
         if save_path is None:
             # Crear directorio assets/images si no existe
-            save_path = f'assets/images/drift_plot_{variable}.png'
-        elif not save_path.startswith('assets/'):
-            # Si no empieza con assets/, agregarlo
-            save_path = f'assets/images/{os.path.basename(save_path)}'
+            save_dir = os.path.join(root_dir, 'assets', 'images')
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, f'drift_plot_{variable}.png')
+        elif not os.path.isabs(save_path):
+            # Si es ruta relativa, ponerla en assets/images del root
+            save_dir = os.path.join(root_dir, 'assets', 'images')
+            os.makedirs(save_dir, exist_ok=True)
+            save_path = os.path.join(save_dir, os.path.basename(save_path))
         
         # Asegurar que el directorio exista
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -610,6 +638,20 @@ class ModelMonitor:
             }
         }
         
+        # Log de depuración detallado
+        print("\n🛠️ DEBUG (Dashboard Data Generation):")
+        print(f"  • Timestamp: {dashboard_data['timestamp']}")
+        print(f"  • Health Score: {health_score} ({type(health_score)})")
+        print(f"  • Summary Counts: C:{critical_count}, W:{warning_count}, N:{normal_count}")
+        summary_types = {k: type(v).__name__ for k, v in dashboard_data['summary'].items()}
+        print(f"  • Tipos en Summary: {summary_types}")
+        
+        if self.monitoring_results:
+            first_var = list(self.monitoring_results.keys())[0]
+            print(f"  • Ejemplo Variable ({first_var}):")
+            for k, v in self.monitoring_results[first_var].items():
+                print(f"    - {k}: {v} ({type(v).__name__})")
+            
         return dashboard_data
 
 def main():
@@ -679,10 +721,11 @@ def main():
     dashboard_data = monitor.generate_monitoring_dashboard()
     
     # Guardar datos para Streamlit en assets
-    import os
-    os.makedirs('assets', exist_ok=True)
-    joblib.dump(dashboard_data, 'assets/streamlit_dashboard_data.pkl')
-    print(f"✅ Datos para dashboard guardados en assets/")
+    assets_dir = os.path.join(root_dir, 'assets')
+    os.makedirs(assets_dir, exist_ok=True)
+    dashboard_data_path = os.path.join(assets_dir, 'streamlit_dashboard_data.pkl')
+    joblib.dump(dashboard_data, dashboard_data_path)
+    print(f"✅ Datos para dashboard guardados en {assets_dir}/")
     print(f"🔍 DEBUG: Claves generadas en dashboard_data:")
     for key, value in dashboard_data.items():
         print(f"  • {key}: {type(value)} - {value}")

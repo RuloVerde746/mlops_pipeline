@@ -84,18 +84,44 @@ st.markdown("---")
 # Sidebar para información general
 st.sidebar.header("🎯 Información General")
 
+# Toggle de Depuración
+DEBUG_MODE = st.sidebar.checkbox("🔍 Habilitar Modo Depuración", value=False)
+if DEBUG_MODE:
+    st.sidebar.info("Modo depuración activo")
+
 # Cargar datos del monitoreo
 @st.cache_data(ttl=300)  # Cache por 5 minutos
 def load_monitoring_data():
     """Carga los datos de monitoreo generados por model_monitoring.py"""
     try:
-        if os.path.exists('assets/streamlit_dashboard_data.pkl'):
-            return joblib.load('assets/streamlit_dashboard_data.pkl')
+        path = 'assets/streamlit_dashboard_data.pkl'
+        if os.path.exists(path):
+            data = joblib.load(path)
+            # LOG DE CONSOLA PERMANENTE
+            print(f"\n[DASHBOARD LOG] Datos cargados exitosamente")
+            print(f"[DASHBOARD LOG] Timestamp data: {data.get('timestamp')}")
+            print(f"[DASHBOARD LOG] Variables en resultados: {len(data.get('monitoring_results', {}))}")
+            
+            if DEBUG_MODE:
+                st.sidebar.markdown("---")
+                st.sidebar.subheader("🛠️ Debug Information")
+                st.sidebar.write(f"📂 Archivo cargado: {path}")
+                st.sidebar.write(f"📊 Tipo de data: {type(data)}")
+                st.sidebar.write(f"📅 Timestamp: {data.get('timestamp', 'N/A')}")
+                
+                # Resumen de tipos en summary
+                if 'summary' in data:
+                    st.sidebar.write("📈 Tipos en Summary:")
+                    for k, v in data['summary'].items():
+                        st.sidebar.write(f"- {k}: {type(v)}")
+            return data
         else:
             st.error("❌ No se encontraron datos de monitoreo. Ejecuta model_monitoring.py primero.")
             return None
     except Exception as e:
         st.error(f"❌ Error al cargar datos: {str(e)}")
+        if DEBUG_MODE:
+            st.exception(e)
         return None
 
 # Cargar datos
@@ -169,10 +195,20 @@ if dashboard_data:
                 'Normales': 'green'
             }
         )
-        st.plotly_chart(fig_alerts, use_container_width=True)
+        st.plotly_chart(fig_alerts, width='stretch')
     
     with tab2:
         st.header("🚨 Alertas Detalladas")
+        
+        # Validación de datos críticos en modo debug
+        if DEBUG_MODE:
+            st.info("🔍 Validación de llaves para Alertas:")
+            vars_sample = list(dashboard_data['monitoring_results'].values())
+            if vars_sample:
+                keys = vars_sample[0].keys()
+                st.write(f"Llaves disponibles en variable: {list(keys)}")
+                if 'ks_stat' not in keys and 'ks_statistic' in keys:
+                    st.warning("⚠️ Se detectó 'ks_statistic' en lugar de 'ks_stat'. El dashboard podría mostrar N/A.")
         
         # Alertas críticas
         critical_count = get_column_value(dashboard_data['summary'], 'critical_alerts')
@@ -186,11 +222,19 @@ if dashboard_data:
             if critical_vars:
                 critical_df = pd.DataFrame(critical_vars)
                 for idx, row in critical_df.iterrows():
-                    with st.expander(f"🔥 Variable: {row.get('variable', 'N/A')}"):
+                    var_name = row.get('variable')
+                    if var_name is None or str(var_name) == 'nan' or str(var_name) == 'N/A':
+                        var_name = f"Variable {idx}"
+                    
+                    # Log de consola para cada alerta crítica procesada
+                    print(f"[DASHBOARD LOG] Procesando Alerta Crítica: {var_name}")
+                    
+                    with st.expander(f"🔥 Variable: {var_name}"):
                         col1, col2 = st.columns(2)
                         with col1:
+                            ks_val = row.get('ks_stat') or row.get('ks_statistic') or 'N/A'
                             st.metric("Métrica PSI", format_metric(row.get('psi', 'N/A')))
-                            st.metric("Métrica KS", format_metric(row.get('ks_stat', 'N/A')))
+                            st.metric("Métrica KS", format_metric(ks_val))
                         with col2:
                             st.metric("Umbral PSI", row.get('psi_threshold', 'N/A'))
                             st.metric("Umbral KS", row.get('ks_threshold', 'N/A'))
@@ -214,11 +258,19 @@ if dashboard_data:
             if warning_vars:
                 warning_df = pd.DataFrame(warning_vars)
                 for idx, row in warning_df.iterrows():
-                    with st.expander(f"⚠️ Variable: {row.get('variable', 'N/A')}"):
+                    var_name = row.get('variable')
+                    if var_name is None or str(var_name) == 'nan' or str(var_name) == 'N/A':
+                        var_name = f"Variable {idx}"
+                    
+                    # Log de consola para cada alerta de advertencia procesada
+                    print(f"[DASHBOARD LOG] Procesando Alerta Advertencia: {var_name}")
+                        
+                    with st.expander(f"⚠️ Variable: {var_name}"):
                         col1, col2 = st.columns(2)
                         with col1:
+                            ks_val = row.get('ks_stat') or row.get('ks_statistic') or 'N/A'
                             st.metric("Métrica PSI", format_metric(row.get('psi', 'N/A')))
-                            st.metric("Métrica KS", format_metric(row.get('ks_stat', 'N/A')))
+                            st.metric("Métrica KS", format_metric(ks_val))
                         with col2:
                             st.metric("Umbral PSI", row.get('psi_threshold', 'N/A'))
                             st.metric("Umbral KS", row.get('ks_threshold', 'N/A'))
@@ -288,7 +340,7 @@ if dashboard_data:
             variables_df = variables_df.sort_values(sort_by, ascending=False)
             
             # Mostrar tabla
-            st.dataframe(variables_df, use_container_width=True)
+            st.dataframe(variables_df, width='stretch')
             
             # Gráfico de PSI vs KS
             st.subheader("📈 PSI vs KS por Variable")
@@ -300,7 +352,7 @@ if dashboard_data:
                 hover_data=['Variable', 'Recomendación'],
                 title="Métricas de Drift por Variable"
             )
-            st.plotly_chart(fig_scatter, use_container_width=True)
+            st.plotly_chart(fig_scatter, width='stretch')
     
     with tab4:
         st.header("📋 Reporte Completo")
@@ -367,6 +419,22 @@ else:
 # Footer
 st.markdown("---")
 st.markdown("🤖 **Dashboard MLOps Pipeline** | Monitoreo Continuo de Modelos de Machine Learning")
+
+# Sección de Inspección de Datos (Solo en DEBUG_MODE)
+if DEBUG_MODE and dashboard_data:
+    st.markdown("---")
+    with st.expander("🛠️ INSPECCIÓN DE DATOS CRUDOS (DEBUG)", expanded=False):
+        st.json(dashboard_data)
+        
+        st.subheader("🔍 Estructura de monitoring_results")
+        for var, details in dashboard_data.get('monitoring_results', {}).items():
+            st.write(f"**Variable:** {var}")
+            st.write(f"  • Alert Level: {details.get('alert_level')} ({type(details.get('alert_level'))})")
+            st.write(f"  • PSI: {details.get('psi')} ({type(details.get('psi'))})")
+            ks_val = details.get('ks_stat') or details.get('ks_statistic')
+            st.write(f"  • KS: {ks_val} ({type(ks_val)})")
+            if ks_val is None:
+                st.error(f"❌ Falta métrica KS para {var}")
 
 # Auto-refresh
 refresh_interval = st.sidebar.slider("🔄 Auto-refresh (segundos)", 30, 300, 60)
