@@ -177,3 +177,51 @@ Este script representa el núcleo del despliegue productivo, utilizando **FastAP
 python src/model_deploy.py
 ```
 La documentación interactiva estará disponible automáticamente en `http://localhost:8000/docs`.
+
+---
+
+## 📈 Avance 5: Visualización y Dashboard Interactivo
+
+### 🎯 Objetivos Logrados
+- [x] **Dashboard de Monitoreo con Streamlit**: Interfaz gráfica para visualizar la salud del modelo en tiempo real.
+- [x] **Integración de Logs Persistentes**: Sistema de auditoría que permite ver el estado del pipeline desde la terminal de Docker o PowerShell.
+- [x] **Análisis de Drift Visual**: Pestañas dedicadas para alertas críticas, incluyendo histogramas y gráficos de estabilidad.
+
+---
+
+## 🏁 Guía Paso a Paso: Ejecución Completa del Proyecto
+
+Sigue este flujo para ejecutar el sistema desde cero hasta la visualización en el dashboard.
+
+### 1. Preparación del Entorno
+Antes de empezar, asegúrate de tener instalado **Docker Desktop** y Python 3.9+.
+- Crea tu entorno virtual: `python -m venv venv`
+- Actívalo: `.\venv\Scripts\activate` (Windows)
+- Instala dependencias: `pip install -r requirements.txt`
+
+### 2. Procesamiento de Datos y Entrenamiento
+Ejecuta los scripts en este orden para generar los artefactos del modelo:
+1. **Carga de Datos**: `python src/cargar_datos.py` (Procesa el Excel inicial).
+2. **Entrenamiento**: `python src/model_training_evaluation.py` (Entrena 5 modelos, selecciona el mejor y guarda `mejor_modelo_decision_tree.pkl`).
+
+### 3. Despliegue con Docker Desktop
+**Docker Desktop** es fundamental aquí porque permite "empaquetar" nuestra API (`FastAPI`) junto con todas sus dependencias en un contenedor. Esto garantiza que el modelo funcione exactamente igual en tu máquina que en un servidor de producción.
+- Ejecuta: `docker-compose up --build`
+- Esto levantará la API en el puerto `8000`. Puedes verificarlo en `http://localhost:8000/docs`.
+
+### 4. Generación de Monitoreo (Data Drift)
+Para simular el paso del tiempo y verificar si el modelo sigue siendo preciso, ejecutamos el sistema de monitoreo:
+- Ejecuta: `python src/model_monitoring.py`
+- Este script comparará los datos originales contra los nuevos, generará alertas y creará los archivos en la carpeta `assets/`.
+
+### 5. Visualización en Streamlit
+**Streamlit** es la herramienta que convierte nuestros scripts de datos en una aplicación web interactiva. No necesitas saber HTML/CSS; Streamlit interpreta el código Python para crear el dashboard.
+- Ejecuta: `streamlit run src/streamlit_app.py`
+- Se abrirá una ventana en tu navegador (`http://localhost:8501`) donde verás:
+    - La salud general del modelo.
+    - Las variables que han sufrido desviaciones (Drift).
+    - Recomendaciones automáticas sobre si debes reentrenar el modelo.
+
+---
+> **Tip de Depuración**: Si activas el **"Modo Depuración"** en el sidebar de Streamlit, podrás ver logs técnicos adicionales y la estructura cruda de los datos procesados.
+

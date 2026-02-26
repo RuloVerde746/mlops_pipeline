@@ -74,4 +74,23 @@ python src/model_monitoring.py
 ```
 
 ---
+
+## 🎨 Dashboard Interactivo (Streamlit)
+
+El dashboard (`streamlit_app.py`) ha sido mejorado para ofrecer una experiencia de usuario premium y herramientas de depuración profunda:
+
+### Características Principales:
+- **Panel de KPIs**: Visualización instantánea de Salud del Modelo (Health Score), Alertas Críticas y Advertencias.
+- **Navegación por Pestañas**:
+    - **Resumen**: Gráficos de pastel y métricas agregadas.
+    - **Alertas**: Detalles técnicos de cada variable afectada, incluyendo gráficos de drift.
+    - **Variables**: Tabla interactiva con filtros y gráficos de dispersión PSI vs KS.
+    - **Reporte**: Recomendaciones automáticas basadas en el estado del modelo y descarga del reporte HTML.
+- **Modo Depuración (Debug Mode)**: Interruptor en el sidebar que activa logs detallados de consola y permite inspeccionar el objeto JSON crudo de los datos.
+
+### Mejoras de Robustez:
+- **Formateo Inteligente**: Las métricas se muestran con 4 decimales limpios, manejando automáticamente valores `N/A` o `NaN`.
+- **Logs Persistentes**: El sistema imprime en la terminal del servidor (Docker/PowerShell) cada acción de carga de datos y procesamiento de alertas para auditoría en tiempo real.
+
+---
 > **Nota:** Este sistema es fundamental para la estrategia de **Continuos Monitoring (CM)** en nuestra arquitectura de MLOps.

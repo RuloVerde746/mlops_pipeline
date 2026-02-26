@@ -314,8 +314,11 @@ class ModelMonitor:
                     # Determinar nivel de alerta
                     alert_level = self._get_alert_level(psi, ks_stat, js_dist)
                     
-                    # LOG DE CONSOLA OBLIGATORIO
-                    print(f"    [LOG] Var: {var} | PSI: {psi:.4f} | Alert: {alert_level}")
+                    # LOG DE CONSOLA OBLIGATORIO (Siempre visible)
+                    print(f"    [MONITOR] Analizando: {var}")
+                    print(f"      • PSI: {psi:.4f} (Umbral: {self.thresholds['psi_warning']})")
+                    print(f"      • KS: {ks_stat:.4f}")
+                    print(f"      • Nivel: {alert_level}")
                     
                     results[var] = {
                         'variable': str(var),
@@ -324,6 +327,8 @@ class ModelMonitor:
                         'ks_p_value': ks_p,
                         'jensen_shannon': js_dist,
                         'alert_level': alert_level,
+                        'psi_threshold': self.thresholds['psi_warning'],
+                        'ks_threshold': self.thresholds['ks_warning'],
                         'reference_mean': ref_values.mean(),
                         'new_mean': new_values.mean(),
                         'reference_std': ref_values.std(),
@@ -341,9 +346,11 @@ class ModelMonitor:
                 'variable': 'prediction',
                 'chi2_statistic': chi2_stat,
                 'chi2_p_value': chi2_p,
-                'alert_level': self._get_alert_level_categorical(chi2_p)
+                'alert_level': self._get_alert_level_categorical(chi2_p),
+                'psi_threshold': 'N/A',
+                'ks_threshold': 'N/A'
             }
-            print(f"    [LOG] Var: prediction | Chi2: {chi2_stat:.4f} | Alert: {results['prediction']['alert_level']}")
+            print(f"    [MONITOR] Var: prediction | Chi2: {chi2_stat:.4f} | Level: {results['prediction']['alert_level']}")
         
         self.monitoring_results = results
         print(f"✅ Evaluación completada: {len(results)} variables analizadas")
@@ -504,12 +511,13 @@ class ModelMonitor:
                        if v.get('alert_level') == 'CRITICAL']
         warning_vars = [k for k, v in self.monitoring_results.items() 
                       if v.get('alert_level') == 'WARNING']
-        
         if critical_vars:
-            html += f"<div class='metric critical'><h3>⚠️ CRITICAL</h3><p>{', '.join(critical_vars)}</p></div>"
+            critical_names = [str(v) for v in critical_vars]
+            html += f"<div class='metric critical'><h3>⚠️ CRITICAL</h3><p>{', '.join(critical_names)}</p></div>"
         
         if warning_vars:
-            html += f"<div class='metric warning'><h3>⚡ WARNING</h3><p>{', '.join(warning_vars)}</p></div>"
+            warning_names = [str(v) for v in warning_vars]
+            html += f"<div class='metric warning'><h3>⚡ WARNING</h3><p>{', '.join(warning_names)}</p></div>"
         
         if not critical_vars and not warning_vars:
             html += "<div class='metric normal'><h3>✅ NORMAL</h3><p>No se detectaron alertas significativas</p></div>"

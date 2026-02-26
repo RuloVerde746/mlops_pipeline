@@ -18,13 +18,20 @@ import warnings
 import json
 warnings.filterwarnings('ignore')
 
-def format_metric(value, format_str=":.4f"):
+def format_metric(value, format_str=".4f"):
     """
-    Función helper para formatear métricas de forma segura
+    Función helper para formatear métricas de forma segura.
     """
     try:
-        if isinstance(value, (int, float)):
-            return f"{value}{format_str}"
+        # Limpiar el formato por si viene con ':'
+        fmt = format_str.replace(":", "").strip()
+        
+        # Manejar NaNs o valores nulos
+        if value is None or (isinstance(value, float) and np.isnan(value)):
+            return "N/A"
+            
+        if isinstance(value, (int, float, np.number)):
+            return format(value, fmt)
         else:
             return str(value)
     except:
@@ -221,13 +228,16 @@ if dashboard_data:
             
             if critical_vars:
                 critical_df = pd.DataFrame(critical_vars)
+                # LOG DE CONSOLA PERMANENTE
+                print(f"\n[DASHBOARD] Procesando {len(critical_df)} alertas críticas")
+                
                 for idx, row in critical_df.iterrows():
                     var_name = row.get('variable')
-                    if var_name is None or str(var_name) == 'nan' or str(var_name) == 'N/A':
+                    if var_name is None or str(var_name) in ['nan', 'None', 'N/A']:
                         var_name = f"Variable {idx}"
                     
-                    # Log de consola para cada alerta crítica procesada
-                    print(f"[DASHBOARD LOG] Procesando Alerta Crítica: {var_name}")
+                    # Log detallado por terminal
+                    print(f"  🔥 Crítica det.: {var_name} | PSI: {row.get('psi')} | KS: {row.get('ks_stat')}")
                     
                     with st.expander(f"🔥 Variable: {var_name}"):
                         col1, col2 = st.columns(2)
@@ -257,13 +267,16 @@ if dashboard_data:
             
             if warning_vars:
                 warning_df = pd.DataFrame(warning_vars)
+                # LOG DE CONSOLA PERMANENTE
+                print(f"[DASHBOARD] Procesando {len(warning_df)} alertas de advertencia")
+                
                 for idx, row in warning_df.iterrows():
                     var_name = row.get('variable')
-                    if var_name is None or str(var_name) == 'nan' or str(var_name) == 'N/A':
+                    if var_name is None or str(var_name) in ['nan', 'None', 'N/A']:
                         var_name = f"Variable {idx}"
                     
-                    # Log de consola para cada alerta de advertencia procesada
-                    print(f"[DASHBOARD LOG] Procesando Alerta Advertencia: {var_name}")
+                    # Log detallado por terminal
+                    print(f"  ⚠️ Advert. det.: {var_name} | PSI: {row.get('psi')}")
                         
                     with st.expander(f"⚠️ Variable: {var_name}"):
                         col1, col2 = st.columns(2)
