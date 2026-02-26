@@ -8,8 +8,10 @@ notebook
 ipykernel
 seaborn
 ipywidgets
-scikit-learn
+scikit-learn==1.6.1
 xgboost
 pydantic
 fastapi
 uvicorn[standard]
+streamlit
+plotly
