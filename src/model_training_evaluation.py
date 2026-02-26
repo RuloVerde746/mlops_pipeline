@@ -224,26 +224,39 @@ def save_model_and_artifacts(best_model, best_model_name, preprocessor, X_train)
     - Mantiene compatibilidad entre versiones
     - Permite guardar objetos complejos como pipelines
     """
+    import os
+    
     print(f"\n💾 GUARDANDO MODELO Y ARTEFACTOS")
     print("="*45)
+    
+    # Obtener directorio raíz del proyecto
+    script_dir = os.path.dirname(__file__)
+    root_dir = os.path.abspath(os.path.join(script_dir, '..'))
+    
+    # Crear directorio data/processed si no existe
+    processed_dir = os.path.join(root_dir, 'data', 'processed')
+    os.makedirs(processed_dir, exist_ok=True)
     
     # Guardar el mejor modelo con nombre dinámico
     # El nombre incluye el tipo de modelo para identificación clara
     model_filename = f'mejor_modelo_{best_model_name.lower().replace(" ", "_")}.pkl'
-    joblib.dump(best_model, model_filename)
+    model_path = os.path.join(root_dir, model_filename)
+    joblib.dump(best_model, model_path)
     print(f"✅ Modelo guardado como: {model_filename}")
     
     # Guardar el preprocesador (pipeline de transformación)
     # Esencial para aplicar las mismas transformaciones a datos nuevos
-    joblib.dump(preprocessor, 'preprocesador.pkl')
+    preprocessor_path = os.path.join(root_dir, 'preprocesador.pkl')
+    joblib.dump(preprocessor, preprocessor_path)
     print("✅ Preprocesador guardado como: preprocesador.pkl")
     
     # Guardar X_train para referencia PSI (Population Stability Index)
     # PSI mide si la distribución de datos cambia en producción
     # Los datos de entrenamiento son la línea base
     X_train_df = pd.DataFrame(X_train)
-    X_train_df.to_csv('data_referencia.csv', index=False)
-    print("✅ Datos de referencia guardados como: data_referencia.csv")
+    reference_data_path = os.path.join(processed_dir, 'data_referencia.csv')
+    X_train_df.to_csv(reference_data_path, index=False)
+    print(f"✅ Datos de referencia guardados como: data/processed/data_referencia.csv")
     
     # Crear archivo de metadatos para trazabilidad completa
     # Incluye información importante para MLOps y auditoría
@@ -251,13 +264,14 @@ def save_model_and_artifacts(best_model, best_model_name, preprocessor, X_train)
         'best_model': best_model_name,
         'model_file': model_filename,
         'preprocessor_file': 'preprocesador.pkl',
-        'reference_data': 'data_referencia.csv',
+        'reference_data': 'data/processed/data_referencia.csv',
         'creation_date': pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S'),
         'purpose': 'Predicción de pago a tiempo de créditos',
         'target_variable': 'Pago_atiempo'
     }
     
-    joblib.dump(metadata, 'model_metadata.pkl')
+    metadata_path = os.path.join(root_dir, 'model_metadata.pkl')
+    joblib.dump(metadata, metadata_path)
     print("✅ Metadatos guardados como: model_metadata.pkl")
 
 def main():

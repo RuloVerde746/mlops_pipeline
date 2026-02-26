@@ -44,8 +44,27 @@ NUMERIC_COLUMNS = [
 CATEGORICAL_COLUMNS = ["tipo_laboral", "tendencia_ingresos"]
 ORDINAL_COLUMNS = ["tipo_credito"]
 
-# Columnas a excluir
-EXCLUDE_COLUMNS = ["fecha_prestamo"] if "fecha_prestamo" in pd.read_csv('data/processed/data_cleaned.csv').columns else []
+# Columnas a excluir (verificación segura con logs)
+import os
+script_dir = os.path.dirname(__file__)
+root_dir = os.path.abspath(os.path.join(script_dir, '..'))
+file_path = os.path.join(root_dir, 'data', 'processed', 'data_cleaned.csv')
+
+print(f"DEBUG: Script directory: {script_dir}")
+print(f"DEBUG: Root directory: {root_dir}")
+print(f"DEBUG: Intentando leer: {file_path}")
+print(f"DEBUG: ¿Existe el archivo?: {os.path.exists(file_path)}")
+
+if os.path.exists(file_path):
+    print(f"DEBUG: Columnas en el archivo: {list(pd.read_csv(file_path).columns)}")
+
+try:
+    EXCLUDE_COLUMNS = ["fecha_prestamo"] if "fecha_prestamo" in pd.read_csv(file_path).columns else []
+    print(f"DEBUG: EXCLUDE_COLUMNS establecido como: {EXCLUDE_COLUMNS}")
+except FileNotFoundError:
+    EXCLUDE_COLUMNS = []
+    print(f"❌ Error: No se encuentra '{file_path}'")
+    print("⚠️  Archivo data_cleaned.csv no encontrado. Se ejecutará sin excluir columnas.")
 
 def create_features(df):
     """
@@ -178,12 +197,17 @@ def split_data_robust(df, test_size=0.2, random_state=42):
     
     return X_train, X_test, y_train, y_test, preprocessor
 
-def load_and_prepare_data(file_path='data/processed/data_cleaned.csv'):
+def load_and_prepare_data(file_path=None):
     """
     Función principal que carga y prepara todo el pipeline
     """
     print("🚀 Iniciando pipeline mejorado de Feature Engineering")
     print("="*60)
+    
+    # Usar la ruta absoluta calculada si no se especifica archivo
+    if file_path is None:
+        file_path = os.path.join(root_dir, 'data', 'processed', 'data_cleaned.csv')
+        print(f"DEBUG: Usando ruta por defecto: {file_path}")
     
     # Cargar datos
     try:
@@ -259,5 +283,32 @@ if __name__ == "__main__":
         print(f"\n🎉 Pipeline listo para entrenar modelos!")
         print(f"✅ X_train shape: {pipeline_result['X_train'].shape}")
         print(f"✅ X_test shape: {pipeline_result['X_test'].shape}")
+        
+        # Guardar datos procesados y preprocesador
+        import pickle
+        
+        # Crear directorio para guardar artefactos si no existe
+        artifacts_dir = os.path.join(root_dir, 'artifacts')
+        os.makedirs(artifacts_dir, exist_ok=True)
+        
+        # Guardar preprocesador
+        preprocessor_path = os.path.join(artifacts_dir, 'preprocesador.pkl')
+        with open(preprocessor_path, 'wb') as f:
+            pickle.dump(pipeline_result['preprocessor'], f)
+        print(f"✅ Preprocesador guardado en: {preprocessor_path}")
+        
+        # Guardar datos procesados
+        data_path = os.path.join(artifacts_dir, 'datos_procesados.pkl')
+        with open(data_path, 'wb') as f:
+            pickle.dump({
+                'X_train': pipeline_result['X_train'],
+                'X_test': pipeline_result['X_test'], 
+                'y_train': pipeline_result['y_train'],
+                'y_test': pipeline_result['y_test'],
+                'feature_names': pipeline_result['preprocessor'].get_feature_names_out()
+            }, f)
+        print(f"✅ Datos procesados guardados en: {data_path}")
+        
+        print(f"\n📦 Artefactos guardados exitosamente en '{artifacts_dir}'")
     else:
         print("❌ Error en el pipeline")

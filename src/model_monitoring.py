@@ -36,10 +36,10 @@ class ModelMonitor:
     Clase principal para monitoreo de modelos y detección de data drift
     """
     
-    def __init__(self, reference_data_path='data_referencia.csv', 
-                 model_path='mejor_modelo_decision_tree.pkl',
-                 preprocessor_path='preprocesador.pkl',
-                 metadata_path='model_metadata.pkl'):
+    def __init__(self, reference_data_path='../data/raw/data_referencia.csv', 
+                 model_path='../models/mejor_modelo_decision_tree.pkl',
+                 preprocessor_path='../models/preprocesador.pkl',
+                 metadata_path='../models/model_metadata.pkl'):
         """
         Inicializa el monitor con datos de referencia y artefactos del modelo
         
@@ -97,7 +97,7 @@ class ModelMonitor:
             from ft_engineering import load_and_prepare_data
             
             # Cargar datos originales para aplicar feature engineering
-            original_data = pd.read_csv('data/processed/data_cleaned.csv')
+            original_data = pd.read_csv('../data/processed/data_cleaned.csv')
             
             # Simular nuevos datos (en producción vendrían de API/base de datos)
             # Para demo, mezclamos datos originales con nuevos
@@ -582,18 +582,31 @@ class ModelMonitor:
         """
         Genera datos para dashboard de Streamlit
         """
+        total_vars = len(self.monitoring_results)
+        critical_count = len([v for v in self.monitoring_results.values() 
+                           if v.get('alert_level') == 'CRITICAL'])
+        warning_count = len([v for v in self.monitoring_results.values() 
+                          if v.get('alert_level') == 'WARNING'])
+        normal_count = len([v for v in self.monitoring_results.values() 
+                         if v.get('alert_level') == 'NORMAL'])
+        
+        # Calcular health score (0-100)
+        # Variables normales: 100 puntos, Advertencia: 50 puntos, Crítico: 0 puntos
+        if total_vars > 0:
+            health_score = int((normal_count * 100 + warning_count * 50) / total_vars)
+        else:
+            health_score = 100
+            
         dashboard_data = {
             'timestamp': datetime.now().isoformat(),
             'model_info': self.metadata,
             'monitoring_results': self.monitoring_results,
+            'health_score': health_score,
             'summary': {
-                'total_variables': len(self.monitoring_results),
-                'critical_alerts': len([v for v in self.monitoring_results.values() 
-                                   if v.get('alert_level') == 'CRITICAL']),
-                'warning_alerts': len([v for v in self.monitoring_results.values() 
-                                    if v.get('alert_level') == 'WARNING']),
-                'normal_variables': len([v for v in self.monitoring_results.values() 
-                                     if v.get('alert_level') == 'NORMAL'])
+                'total_variables': total_vars,
+                'critical_alerts': critical_count,
+                'warning_alerts': warning_count,
+                'normal_alerts': normal_count
             }
         }
         
@@ -669,7 +682,10 @@ def main():
     import os
     os.makedirs('assets', exist_ok=True)
     joblib.dump(dashboard_data, 'assets/streamlit_dashboard_data.pkl')
-    print("✅ Datos para dashboard guardados en assets/")
+    print(f"✅ Datos para dashboard guardados en assets/")
+    print(f"🔍 DEBUG: Claves generadas en dashboard_data:")
+    for key, value in dashboard_data.items():
+        print(f"  • {key}: {type(value)} - {value}")
     
     print(f"\n🎉 MONITOREO COMPLETADO!")
     print("="*50)

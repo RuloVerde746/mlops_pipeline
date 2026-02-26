@@ -26,8 +26,8 @@ app = FastAPI(
 # 2. Cargar el modelo y el preprocesador
 # Usamos rutas relativas seguras
 BASE_DIR = os.path.dirname(__file__)
-MODEL_PATH = os.path.join(BASE_DIR, "..", "mejor_modelo_decision_tree.pkl")
-PREPROCESSOR_PATH = os.path.join(BASE_DIR, "..", "preprocesador.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "..", "models", "mejor_modelo_decision_tree.pkl")
+PREPROCESSOR_PATH = os.path.join(BASE_DIR, "..", "models", "preprocesador.pkl")
 
 try:
     model = joblib.load(MODEL_PATH)
